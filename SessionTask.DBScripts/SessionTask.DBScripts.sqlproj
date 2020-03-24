@@ -57,6 +57,7 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="Tables" />
+    <Folder Include="Seed" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\User.sql" />
@@ -69,5 +70,8 @@
     <Build Include="Tables\Session.sql" />
     <Build Include="Tables\UserSessionXref.sql" />
     <Build Include="Tables\UserRoleXref.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Seed\Script.PostDeployment.sql" />
   </ItemGroup>
 </Project>
