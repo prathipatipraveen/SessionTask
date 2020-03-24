@@ -1,0 +1,17 @@
+﻿CREATE TABLE [dbo].[UserRoleXref]
+(
+	[UserRoleXrefId] INT IDENTITY(1,1) NOT NULL,
+	[UserId] INT NOT NULL,
+	[RoleId] INT NOT NULL
+CONSTRAINT [PK_UserRoleXref] PRIMARY KEY CLUSTERED   
+(  
+    [UserRoleXrefId] ASC  
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]  
+) ON [PRIMARY]  
+GO
+ALTER TABLE [dbo].[UserRoleXref]  ADD  CONSTRAINT [FK_User_UserRoleXref] FOREIGN KEY([UserId])
+REFERENCES [dbo].[User] ([UserId])
+GO
+ALTER TABLE [dbo].[UserRoleXref]  ADD  CONSTRAINT [FK_Role_UserRoleXref] FOREIGN KEY([RoleId])
+REFERENCES [dbo].[Role] ([RoleId])
+GO
