@@ -19,6 +19,10 @@ using SessionTask.Models.Helpers;
 using SessionTask.DataAccess.Entities;
 using SessionTask.DataAccess.Services;
 using Microsoft.OpenApi.Models;
+using SessionTask.API.Middleware;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
+using SessionTask.Infrastructure.Middleware;
 
 namespace SessionTask.API
 {
@@ -82,18 +86,23 @@ namespace SessionTask.API
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+            //Exception Handling middleware
+            app.UseApiExceptionHandler(options =>
             {
-                app.UseDeveloperExceptionPage();
-            }
+                options.AddResponseDetails = UpdateApiErrorResponse;
+                options.DetermineLogLevel = DetermineLogLevel;
+            });
+
             app.UseHttpsRedirection();
             app.UseRouting();
+
             //Allow requests for only authorized urls
             //app.UseCors(x => x
             //    .WithOrigins(Configuration.GetValue<string>("WebAppURL"))
             //    .AllowAnyHeader()
             //    .AllowAnyMethod()
             //);
+
             app.UseCors(x => x
                 .AllowAnyOrigin()
                 .AllowAnyHeader()
@@ -116,6 +125,24 @@ namespace SessionTask.API
                 endpoints.MapControllers();
             });
 
+        }
+
+        private LogLevel DetermineLogLevel(Exception ex)
+        {
+            if (ex.Message.StartsWith("Database", StringComparison.InvariantCultureIgnoreCase) ||
+                ex.Message.StartsWith("Network-Error", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return LogLevel.Critical;
+            }
+            return LogLevel.Error;
+        }
+
+        private void UpdateApiErrorResponse(HttpContext context, Exception ex, ApiError error)
+        {
+            if (ex.GetType().Name == typeof(SqlException).Name)
+            {
+                error.Detail = "Database Exception!";
+            }
         }
 
         private static void AddTestData(SessionTaskContext context)
