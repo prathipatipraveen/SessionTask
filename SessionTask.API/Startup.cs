@@ -19,7 +19,6 @@ using SessionTask.Models.Helpers;
 using SessionTask.DataAccess.Entities;
 using SessionTask.DataAccess.Services;
 using Microsoft.OpenApi.Models;
-using SessionTask.API.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using SessionTask.Infrastructure.Middleware;
