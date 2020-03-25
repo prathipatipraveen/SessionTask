@@ -13,6 +13,7 @@ export const authenticationService = {
 
 function login(username, password) {
     return Api.post(Constants.signIn, JSON.stringify({ username, password })).then((resp) => {
+        //If the authetication is successful then store the user data in local storage
         localStorage.setItem('currentUser', JSON.stringify(resp.data));
         currentUserSubject.next(resp);
         return resp;

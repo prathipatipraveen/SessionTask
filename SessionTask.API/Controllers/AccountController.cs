@@ -29,6 +29,11 @@ namespace SessionTask.API.Controllers
 
         }
 
+        /// <summary>
+        /// Authenticate the user
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost]
         public IActionResult SignIn(SignInRequest request)
         {
@@ -46,7 +51,7 @@ namespace SessionTask.API.Controllers
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.Name, user.UserId.ToString()),
-                    new Claim("Features", featurePermissions)
+                    new Claim("Features", featurePermissions)//add user allowed permissions to token
                 }),
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

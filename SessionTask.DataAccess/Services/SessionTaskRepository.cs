@@ -19,6 +19,8 @@ namespace SessionTask.DataAccess.Services
 
         public List<FeaturePermissionDto> GetUserFeatues(int userId)
         {
+            //Get the list of all feature permissions assigned to the 
+            //user
             var userFeatures = _dbContext.FeatureUserPermissionXref
                         .Where(x => x.UserId == userId)
                         .Select(y => new FeaturePermissionDto
@@ -29,6 +31,8 @@ namespace SessionTask.DataAccess.Services
 
             var roleIds = _dbContext.UserRoleXref.Where(x => x.UserId == userId).Select(x => x.RoleId);
 
+            //get the list of all feature permissions assigned to the 
+            //user role
             var roleFeatures = _dbContext.FeatureRolePermissionXref.Where(x => roleIds.Contains(x.RoleId))
             .Select(y => new FeaturePermissionDto
             {
@@ -43,6 +47,13 @@ namespace SessionTask.DataAccess.Services
             return features;
         }
 
+        /// <summary>
+        /// Authenticate user and once the user is authenticated 
+        /// then get the list of all feature permissions 
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         public UserDto AuthenticateUser(string username, string password)
         {
             //(Models.Permission)Enum.Parse(typeof(Models.Permission), y.Permission.Name)

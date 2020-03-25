@@ -88,6 +88,7 @@ namespace SessionTask.API
             }
             app.UseHttpsRedirection();
             app.UseRouting();
+            //Allow requests for only authorized urls
             //app.UseCors(x => x
             //    .WithOrigins(Configuration.GetValue<string>("WebAppURL"))
             //    .AllowAnyHeader()
