@@ -26,6 +26,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using HealthChecks.UI.Client;
 
 namespace SessionTask.API
 {
@@ -87,6 +88,8 @@ namespace SessionTask.API
             var connectionString = Configuration.GetValue<string>("SqlServerConnectionString");
             services.AddHealthChecks()
                 .AddSqlServer(connectionString, failureStatus: HealthStatus.Unhealthy,tags: new[] {"ready" });
+
+            services.AddHealthChecksUI();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -99,7 +102,7 @@ namespace SessionTask.API
                 options.DetermineLogLevel = DetermineLogLevel;
             });
 
-            app.UseHttpsRedirection();
+            app.UseHttpsRedirection();//To force https connection
             app.UseRouting();
 
             //Allow requests for only authorized urls
@@ -136,7 +139,7 @@ namespace SessionTask.API
                     },
                 ResponseWriter = WriteHealthCheckReadyResponse,
                     Predicate = (check) => check.Tags.Contains("ready")
-                });
+                }).RequireAuthorization();
                 endpoints.MapControllers();
 
                 endpoints.MapHealthChecks("/health/live", new HealthCheckOptions()
@@ -148,10 +151,14 @@ namespace SessionTask.API
                     },
                     ResponseWriter = WriteHealthCheckLiveResponse,
                     Predicate = (check) => !check.Tags.Contains("ready")
+                }).RequireAuthorization();
+                endpoints.MapHealthChecks("/healthui", new HealthCheckOptions()
+                {
+                    Predicate = _ => true,
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                 });
-                endpoints.MapControllers();
             });
-
+            app.UseHealthChecksUI();
         }
 
         private Task WriteHealthCheckLiveResponse(HttpContext httpContext, HealthReport result)
@@ -197,53 +204,5 @@ namespace SessionTask.API
             }
         }
 
-        private static void AddTestData(SessionTaskContext context)
-        {
-            context.User.AddRange(
-                new List<User>
-                {
-                     new User
-                    {
-                        UserId = 1,
-                        UserName = "admin",
-                        Password = "admin",
-                        IsActive = true
-                    },
-                    new User
-                    {
-                        UserId = 2,
-                        UserName = "attendee",
-                        Password = "attendee",
-                        IsActive = true
-                    },
-                    new User
-                    {
-                        UserId = 3,
-                        UserName = "Host",
-                        Password = "host",
-                        IsActive = true
-                    }
-            });
-
-            context.Role.AddRange(
-                new List<Role>
-                {
-                     new Role
-                    {
-                        RoleId = 1,
-                        RoleName = "admin"
-                    },
-                    new Role
-                    {
-                        RoleId = 2,
-                        RoleName = "attendee"
-                    },
-                    new Role
-                    {
-                        RoleId = 3,
-                        RoleName = "Host"
-                    }
-            });
-        }
     }
 }
