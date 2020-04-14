@@ -85,7 +85,8 @@ namespace SessionTask.API.Controllers
         [AuthorizationFilter("Enroll", "Create")]
         public async Task<int> EnrollToSession(EnrollSessionDto enrollToSession)
         {
-            return await _sessionTaskRepository.EnrollToSession(enrollToSession);
+
+                return await _sessionTaskRepository.EnrollToSession(enrollToSession);
         }
 
         /// <summary>

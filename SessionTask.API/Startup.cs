@@ -22,6 +22,10 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using SessionTask.Infrastructure.Middleware;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace SessionTask.API
 {
@@ -80,6 +84,9 @@ namespace SessionTask.API
                 };
             });
             services.AddScoped<ISessionTaskRepository, SessionTaskRepository>();
+            var connectionString = Configuration.GetValue<string>("SqlServerConnectionString");
+            services.AddHealthChecks()
+                .AddSqlServer(connectionString, failureStatus: HealthStatus.Unhealthy,tags: new[] {"ready" });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -121,9 +128,55 @@ namespace SessionTask.API
             });
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions() { 
+                ResultStatusCodes = { 
+                    [HealthStatus.Healthy]=StatusCodes.Status200OK,
+                    [HealthStatus.Degraded]=StatusCodes.Status500InternalServerError,
+                    [HealthStatus.Unhealthy]=StatusCodes.Status503ServiceUnavailable
+                    },
+                ResponseWriter = WriteHealthCheckReadyResponse,
+                    Predicate = (check) => check.Tags.Contains("ready")
+                });
+                endpoints.MapControllers();
+
+                endpoints.MapHealthChecks("/health/live", new HealthCheckOptions()
+                {
+                    ResultStatusCodes = {
+                    [HealthStatus.Healthy]=StatusCodes.Status200OK,
+                    [HealthStatus.Degraded]=StatusCodes.Status500InternalServerError,
+                    [HealthStatus.Unhealthy]=StatusCodes.Status503ServiceUnavailable
+                    },
+                    ResponseWriter = WriteHealthCheckLiveResponse,
+                    Predicate = (check) => !check.Tags.Contains("ready")
+                });
                 endpoints.MapControllers();
             });
 
+        }
+
+        private Task WriteHealthCheckLiveResponse(HttpContext httpContext, HealthReport result)
+        {
+            httpContext.Response.ContentType = "application/json";
+            var json = new JObject(
+                new JProperty("OverallStatus", result.Status.ToString()),
+                new JProperty("Total Duraton", result.TotalDuration.TotalSeconds.ToString("0:0.00"))
+                );
+            return httpContext.Response.WriteAsync(json.ToString(Formatting.Indented));
+        }
+
+        private Task WriteHealthCheckReadyResponse(HttpContext httpContext, HealthReport result)
+        {
+            httpContext.Response.ContentType = "application/json";
+            var json = new JObject(
+                new JProperty("OverallStatus", result.Status.ToString()),
+                new JProperty("Total Duraton", result.TotalDuration.TotalSeconds.ToString("0:0.00")),
+                new JProperty("DependencyHealthChecks", new JObject(result.Entries.Select(dicItem =>
+                 new JProperty(dicItem.Key, new JObject(
+                     new JProperty("Status", dicItem.Value.Status.ToString())
+                     ))
+                )))
+                );
+            return httpContext.Response.WriteAsync(json.ToString(Formatting.Indented));
         }
 
         private LogLevel DetermineLogLevel(Exception ex)
